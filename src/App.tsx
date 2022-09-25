@@ -38,7 +38,10 @@ function App() {
             </a>
           </div>
           <div className="card">
-            <button onClick={() => setCount((count) => count + 1)}>
+            <button
+              className="shadow"
+              onClick={() => setCount((count) => count + 1)}
+            >
               count is {count}
             </button>
           </div>
