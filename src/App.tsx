@@ -10,30 +10,39 @@ function App() {
 
   return (
     <ShadowDOM>
-      <style>{appCss}</style>
-      <style>{indexCss}</style>
-      <div className="App">
-        <div>
-          <a href="https://vitejs.dev" target="_blank">
-            <img
-              src={chrome.runtime.getURL(viteLogo)}
-              className="logo"
-              alt="Vite logo"
-            />
-          </a>
-          <a href="https://reactjs.org" target="_blank">
-            <img
-              src={chrome.runtime.getURL(reactLogo)}
-              className="logo react"
-              alt="React logo"
-            />
-          </a>
-        </div>
-        <h1>Vite + React</h1>
-        <div className="card">
-          <button onClick={() => setCount((count) => count + 1)}>
-            count is {count}
-          </button>
+      <div
+        style={{
+          position: "absolute",
+          right: 0,
+          left: 0,
+          height: 0,
+        }}
+      >
+        <style>{appCss}</style>
+        <style>{indexCss}</style>
+        <div className="App">
+          <div>
+            <a href="https://vitejs.dev" target="_blank">
+              <img
+                src={chrome.runtime.getURL(viteLogo)}
+                className="logo"
+                alt="Vite logo"
+              />
+            </a>
+            <a href="https://reactjs.org" target="_blank">
+              <img
+                src={chrome.runtime.getURL(reactLogo)}
+                className="logo react"
+                alt="React logo"
+              />
+            </a>
+          </div>
+          <h1>Vite + React</h1>
+          <div className="card">
+            <button onClick={() => setCount((count) => count + 1)}>
+              count is {count}
+            </button>
+          </div>
         </div>
       </div>
     </ShadowDOM>
