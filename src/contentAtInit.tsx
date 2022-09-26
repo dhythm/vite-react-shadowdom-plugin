@@ -16,7 +16,111 @@ function findListenerIndex(listenerObjects: any, args: any) {
   return -1;
 }
 
-const listenerObjectsByType = new Map();
+type ListenerObject = {
+  type: string;
+  handler: EventListener;
+  _handler: EventListener;
+  options: boolean | AddEventListenerOptions | undefined;
+  self: any;
+};
+
+const listenerObjectsByType: Map<string, ListenerObject[]> = new Map();
+
+// react > DOMEventNames.js
+const eventTypes = [
+  "abort",
+  "afterblur",
+  "beforeblur",
+  "beforeinput",
+  "blur",
+  "canplay",
+  "canplaythrough",
+  "cancel",
+  "change",
+  "click",
+  "close",
+  "compositionend",
+  "compositionstart",
+  "compositionupdate",
+  "contextmenu",
+  "copy",
+  "cut",
+  "dblclick",
+  "auxclick",
+  "drag",
+  "dragend",
+  "dragenter",
+  "dragexit",
+  "dragleave",
+  "dragover",
+  "dragstart",
+  "drop",
+  "durationchange",
+  "emptied",
+  "encrypted",
+  "ended",
+  "error",
+  "focus",
+  "focusin",
+  "focusout",
+  "fullscreenchange",
+  "gotpointercapture",
+  "hashchange",
+  "input",
+  "invalid",
+  "keydown",
+  "keypress",
+  "keyup",
+  "load",
+  "loadstart",
+  "loadeddata",
+  "loadedmetadata",
+  "lostpointercapture",
+  "message",
+  "mousedown",
+  "mouseenter",
+  "mouseleave",
+  "mousemove",
+  "mouseout",
+  "mouseover",
+  "mouseup",
+  "paste",
+  "pause",
+  "play",
+  "playing",
+  "pointercancel",
+  "pointerdown",
+  "pointerenter",
+  "pointerleave",
+  "pointermove",
+  "pointerout",
+  "pointerover",
+  "pointerup",
+  "popstate",
+  "progress",
+  "ratechange",
+  "reset",
+  "resize",
+  "scroll",
+  "seeked",
+  "seeking",
+  "select",
+  "selectstart",
+  "selectionchange",
+  "stalled",
+  "submit",
+  "suspend",
+  "textInput",
+  "timeupdate",
+  "toggle",
+  "touchcancel",
+  "touchend",
+  "touchmove",
+  "touchstart",
+  "volumechange",
+  "waiting",
+  "wheel",
+];
 
 ["click"].forEach((eventType) => {
   window.addEventListener(
@@ -24,15 +128,13 @@ const listenerObjectsByType = new Map();
     (e) => {
       console.count(eventType);
       const listenerObjects = listenerObjectsByType.get(eventType);
-      const listenersCapturing = listenerObjects.filter(
-        (v) => v.options === true || v.options?.capture === true
-      );
+      const listenersCapturing =
+        listenerObjects?.filter((v) => v.options === true) ?? [];
       listenersCapturing.forEach((listener) => {
         listener.handler.call(listener.self, e);
       });
-      const listenersBubbling = listenerObjects.filter(
-        (v) => !v.options || v.options?.capture === false
-      );
+      const listenersBubbling =
+        listenerObjects?.filter((v) => !v.options) ?? [];
       listenersBubbling.forEach((listener) => {
         listener.handler.call(listener.self, e);
       });
@@ -90,8 +192,9 @@ const listenerObjectsByType = new Map();
             //   listenerBubbling?.handler(event);
             //   return;
             // }
-            args[1].call(event.currentTarget, event);
+            // args[1].call(event.currentTarget, event);
           }
+          args[1].call(event.currentTarget, event);
         };
 
         // nativeAddEventListener.call(this, args[0], _handler, args[2]);
