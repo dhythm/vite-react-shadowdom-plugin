@@ -16,6 +16,11 @@ const manifest = defineManifest({
       js: ["src/content.tsx"],
       matches: ["http://*/*", "https://*/*"],
     },
+    {
+      js: ["src/contentAtInit.tsx"],
+      matches: ["http://*/*", "https://*/*"],
+      run_at: "document_start",
+    },
   ],
 });
 
