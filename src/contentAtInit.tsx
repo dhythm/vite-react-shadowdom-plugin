@@ -1,31 +1,3 @@
-function findListenerIndex(listenerObjects: any, args: any) {
-  for (var i = 0; i < listenerObjects.length; i++) {
-    if (
-      deepEqual(
-        {
-          type: listenerObjects[i].type,
-          handler: listenerObjects[i].handler,
-          options: listenerObjects[i].options,
-        },
-        args
-      )
-    ) {
-      return i;
-    }
-  }
-  return -1;
-}
-
-type ListenerObject = {
-  type: string;
-  handler: EventListener;
-  _handler: EventListener;
-  options: boolean | AddEventListenerOptions | undefined;
-  self: any;
-};
-
-const listenerObjectsByType: Map<string, ListenerObject[]> = new Map();
-
 // react > DOMEventNames.js
 const eventTypes = [
   "abort",
@@ -122,21 +94,54 @@ const eventTypes = [
   "wheel",
 ];
 
+function findListenerIndex(listenerObjects: any, args: any) {
+  for (var i = 0; i < listenerObjects.length; i++) {
+    if (
+      deepEqual(
+        {
+          type: listenerObjects[i].type,
+          handler: listenerObjects[i].handler,
+          options: listenerObjects[i].options,
+        },
+        args
+      )
+    ) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+type ListenerObject = {
+  type: string;
+  handler: EventListener;
+  _handler: EventListener;
+  options: boolean | AddEventListenerOptions | undefined;
+  self: any;
+};
+
+const listenerObjectsByType: Map<string, ListenerObject[]> = new Map();
+
 ["click"].forEach((eventType) => {
   window.addEventListener(
     eventType,
-    (e) => {
-      console.count(eventType);
+    (event) => {
+      // debugger;
+      const paths = event.composedPath();
+      const isShadowDOM = paths.some((path: any) => path?.shadowRoot);
+      if (isShadowDOM) {
+        console.count("eventTarget is in shadow DOM");
+      }
       const listenerObjects = listenerObjectsByType.get(eventType);
-      const listenersCapturing =
+      const listenersInCapturing =
         listenerObjects?.filter((v) => v.options === true) ?? [];
-      listenersCapturing.forEach((listener) => {
-        listener.handler.call(listener.self, e);
+      listenersInCapturing.forEach((listener) => {
+        listener._handler.call(listener.self, event);
       });
-      const listenersBubbling =
+      const listenersInBubbling =
         listenerObjects?.filter((v) => !v.options) ?? [];
-      listenersBubbling.forEach((listener) => {
-        listener.handler.call(listener.self, e);
+      listenersInBubbling.forEach((listener) => {
+        listener._handler.call(listener.self, event);
       });
     },
     true
@@ -170,6 +175,7 @@ const eventTypes = [
       });
       if (listenerIndex === -1) {
         const _handler = function _handler(event: any) {
+          console.count("_handler is called");
           if (
             event.eventPhase === event.CAPTURING_PHASE &&
             target &&
@@ -178,26 +184,22 @@ const eventTypes = [
             return;
           }
           if (event.isTrusted) {
-            // const paths = event.composedPath();
-            // const isShadowDOM = paths.some((path: any) => path?.shadowRoot);
-            // if (isShadowDOM) {
-            //   event.stopImmediatePropagation();
-            //   const listenerObjects: {
-            //     type: string;
-            //     handler: EventListener;
-            //     options: boolean | AddEventListenerOptions | undefined;
-            //     _handler: EventListener;
-            //   }[] = listenerObjectsByType.get(event.type);
-            //   const listenerBubbling = listenerObjects.find((v) => !v.options);
-            //   listenerBubbling?.handler(event);
-            //   return;
-            // }
-            // args[1].call(event.currentTarget, event);
+            const paths = event.composedPath();
+            const isShadowDOM = paths.some((path: any) => path?.shadowRoot);
+            if (isShadowDOM) {
+              event.stopImmediatePropagation();
+              const listenerObjects = listenerObjectsByType.get(event.type);
+              const listenerBubbling = listenerObjects?.find((v) => !v.options);
+              listenerBubbling?.handler(event);
+              return;
+            }
+            args[1].call(event.currentTarget, event);
           }
-          args[1].call(event.currentTarget, event);
+          // args[1].call(event.currentTarget, event);
         };
 
         // nativeAddEventListener.call(this, args[0], _handler, args[2]);
+        // nativeAddEventListener.call(this, args[0], args[1], args[2]);
 
         const listenerObject = {
           type: args[0],
