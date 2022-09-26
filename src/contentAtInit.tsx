@@ -113,11 +113,11 @@ function findListenerIndex(listenerObjects: any, args: any) {
 }
 
 type ListenerObject = {
+  eventTarget: any;
   type: string;
   handler: EventListener;
-  _handler: EventListener;
+  nativeAddEventListener: any;
   options: boolean | AddEventListenerOptions | undefined;
-  self: any;
 };
 
 const listenerObjectsByType: Map<string, ListenerObject[]> = new Map();
@@ -126,22 +126,59 @@ const listenerObjectsByType: Map<string, ListenerObject[]> = new Map();
   window.addEventListener(
     eventType,
     (event) => {
-      // debugger;
+      const listenerObjects = listenerObjectsByType.get(eventType);
+      if (!listenerObjects) return;
+
+      const listenersInCapturing = listenerObjects.filter(
+        (listenerObject) => listenerObject.options === true
+      );
+      const listenersInBubbling = listenerObjects.filter(
+        (listenerObject) => !listenerObject.options
+      );
+
       const paths = event.composedPath();
       const isShadowDOM = paths.some((path: any) => path?.shadowRoot);
       if (isShadowDOM) {
-        console.count("eventTarget is in shadow DOM");
+        // event.stopImmediatePropagation();
+        listenersInCapturing.forEach((listener) => {
+          paths.reverse().forEach((path) => {
+            listener.handler.call(path, event);
+            listener.handler.call(listener.eventTarget, event);
+            listener.handler.call(event.target, event);
+            listener.handler.call(event.currentTarget, event);
+            // listener.nativeAddEventListener.call(
+            //   path,
+            //   listener.type,
+            //   listener.handler,
+            //   listener.options
+            // );
+          });
+        });
+        listenersInBubbling.forEach((listener) => {
+          paths.forEach((path) => {
+            // debugger;
+            listener.handler.call(path, event);
+            listener.handler.call(listener.eventTarget, event);
+            listener.handler.call(event.target, event);
+            listener.handler.call(event.currentTarget, event);
+            // listener.nativeAddEventListener.call(
+            //   path,
+            //   listener.type,
+            //   listener.handler,
+            //   listener.options
+            // );
+          });
+        });
+        return;
       }
-      const listenerObjects = listenerObjectsByType.get(eventType);
-      const listenersInCapturing =
-        listenerObjects?.filter((v) => v.options === true) ?? [];
+
+      // The following statements could make no sense
+      // because the original DOM is not on the same context for Chrome extension.
       listenersInCapturing.forEach((listener) => {
-        listener._handler.call(listener.self, event);
+        listener.handler.call(listener.eventTarget, event);
       });
-      const listenersInBubbling =
-        listenerObjects?.filter((v) => !v.options) ?? [];
       listenersInBubbling.forEach((listener) => {
-        listener._handler.call(listener.self, event);
+        listener.handler.call(listener.eventTarget, event);
       });
     },
     true
@@ -150,8 +187,6 @@ const listenerObjectsByType: Map<string, ListenerObject[]> = new Map();
 
 [window, document, Element.prototype, EventTarget.prototype].forEach(
   (eventTarget) => {
-    const target = document.getElementById("crx-root");
-
     const nativeAddEventListener = eventTarget.addEventListener;
     const nativeRemoveEventListener = eventTarget.removeEventListener;
 
@@ -174,39 +209,12 @@ const listenerObjectsByType: Map<string, ListenerObject[]> = new Map();
         options: args[2],
       });
       if (listenerIndex === -1) {
-        const _handler = function _handler(event: any) {
-          console.count("_handler is called");
-          if (
-            event.eventPhase === event.CAPTURING_PHASE &&
-            target &&
-            contains(target, event.target)
-          ) {
-            return;
-          }
-          if (event.isTrusted) {
-            const paths = event.composedPath();
-            const isShadowDOM = paths.some((path: any) => path?.shadowRoot);
-            if (isShadowDOM) {
-              event.stopImmediatePropagation();
-              const listenerObjects = listenerObjectsByType.get(event.type);
-              const listenerBubbling = listenerObjects?.find((v) => !v.options);
-              listenerBubbling?.handler(event);
-              return;
-            }
-            args[1].call(event.currentTarget, event);
-          }
-          // args[1].call(event.currentTarget, event);
-        };
-
-        // nativeAddEventListener.call(this, args[0], _handler, args[2]);
-        // nativeAddEventListener.call(this, args[0], args[1], args[2]);
-
         const listenerObject = {
+          eventTarget: this,
           type: args[0],
           handler: args[1],
           options: args[2],
-          _handler,
-          self: this,
+          nativeAddEventListener,
         };
         listenerObjects.push(listenerObject);
       }
@@ -230,7 +238,7 @@ const listenerObjectsByType: Map<string, ListenerObject[]> = new Map();
         removeEventListener.call(
           eventTarget,
           args[0],
-          listenerObjects[listenerIndex]._handler,
+          listenerObjects[listenerIndex].handler,
           args[2]
         );
         listenerObjects.splice(listenerIndex, 1);
