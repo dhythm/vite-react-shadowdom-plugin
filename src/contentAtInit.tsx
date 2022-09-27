@@ -142,31 +142,31 @@ const listenerObjectsByType: Map<string, ListenerObject[]> = new Map();
         // event.stopImmediatePropagation();
         listenersInCapturing.forEach((listener) => {
           paths.reverse().forEach((path) => {
-            listener.handler.call(path, event);
-            listener.handler.call(listener.eventTarget, event);
-            listener.handler.call(event.target, event);
-            listener.handler.call(event.currentTarget, event);
-            // listener.nativeAddEventListener.call(
-            //   path,
-            //   listener.type,
-            //   listener.handler,
-            //   listener.options
-            // );
+            // listener.handler.call(path, event);
+            // listener.handler.call(listener.eventTarget, event);
+            // listener.handler.call(event.target, event);
+            // listener.handler.call(event.currentTarget, event);
+            listener.nativeAddEventListener.call(
+              path,
+              listener.type,
+              listener.handler,
+              listener.options
+            );
           });
         });
         listenersInBubbling.forEach((listener) => {
           paths.forEach((path) => {
             // debugger;
-            listener.handler.call(path, event);
-            listener.handler.call(listener.eventTarget, event);
-            listener.handler.call(event.target, event);
-            listener.handler.call(event.currentTarget, event);
-            // listener.nativeAddEventListener.call(
-            //   path,
-            //   listener.type,
-            //   listener.handler,
-            //   listener.options
-            // );
+            // listener.handler.call(path, event);
+            // listener.handler.call(listener.eventTarget, event);
+            // listener.handler.call(event.target, event);
+            // listener.handler.call(event.currentTarget, event);
+            listener.nativeAddEventListener.call(
+              path,
+              listener.type,
+              listener.handler,
+              listener.options
+            );
           });
         });
         return;
@@ -217,33 +217,35 @@ const listenerObjectsByType: Map<string, ListenerObject[]> = new Map();
           nativeAddEventListener,
         };
         listenerObjects.push(listenerObject);
+
+        nativeAddEventListener.apply(this, args);
       }
     };
 
-    eventTarget.removeEventListener = function (
-      ...args: [
-        string,
-        EventListener,
-        boolean | AddEventListenerOptions | undefined
-      ]
-    ) {
-      const listenerObjects = listenerObjectsByType.get(args[0]) || [];
-      const listenerIndex = findListenerIndex(listenerObjects, {
-        type: args[0],
-        handler: args[1],
-        options: args[2],
-      });
+    // eventTarget.removeEventListener = function (
+    //   ...args: [
+    //     string,
+    //     EventListener,
+    //     boolean | AddEventListenerOptions | undefined
+    //   ]
+    // ) {
+    //   const listenerObjects = listenerObjectsByType.get(args[0]) || [];
+    //   const listenerIndex = findListenerIndex(listenerObjects, {
+    //     type: args[0],
+    //     handler: args[1],
+    //     options: args[2],
+    //   });
 
-      if (listenerIndex !== -1) {
-        removeEventListener.call(
-          eventTarget,
-          args[0],
-          listenerObjects[listenerIndex].handler,
-          args[2]
-        );
-        listenerObjects.splice(listenerIndex, 1);
-      }
-    };
+    //   if (listenerIndex !== -1) {
+    //     removeEventListener.call(
+    //       eventTarget,
+    //       args[0],
+    //       listenerObjects[listenerIndex].handler,
+    //       args[2]
+    //     );
+    //     listenerObjects.splice(listenerIndex, 1);
+    //   }
+    // };
   }
 );
 
