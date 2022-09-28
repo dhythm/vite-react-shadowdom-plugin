@@ -140,6 +140,11 @@ const listenerObjectsByType: Map<string, ListenerObject[]> = new Map();
       const isShadowDOM = paths.some((path: any) => path?.shadowRoot);
       if (isShadowDOM) {
         // event.stopImmediatePropagation();
+        console.log({
+          eventType: event.type,
+          listenersInBubbling,
+          listenersInCapturing,
+        });
         listenersInCapturing.forEach((listener) => {
           paths.reverse().forEach((path) => {
             // listener.handler.call(path, event);
