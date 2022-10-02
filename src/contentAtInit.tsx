@@ -150,7 +150,8 @@ eventTypes.forEach((eventType) => {
       const isShadowDOM = paths.some((path: any) => path?.shadowRoot);
       if (!isShadowDOM) return;
       event.stopImmediatePropagation();
-      const proxyEvent = new Proxy(event, new AdaptedEvent(event));
+      // const proxyEvent = new Proxy(event, new AdaptedEvent(event));
+      const proxyEvent = new Proxy(event, new (AdaptedEvent as any)(event));
       [...paths].reverse().forEach((path) => {
         listenerObjects
           .get(path)
