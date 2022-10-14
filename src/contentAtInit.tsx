@@ -147,8 +147,9 @@ eventTypes.forEach((eventType) => {
       if (!listenerObjects) return;
 
       const paths = event.composedPath();
-      const isShadowDOM = paths.some((path: any) => path?.shadowRoot);
-      if (!isShadowDOM) return;
+      // const isShadowDOM = paths.some((path: any) => path?.shadowRoot);
+      const isPlugin = paths.some((path: any) => path?.id === "plugin-root");
+      if (!isPlugin) return;
       event.stopImmediatePropagation();
       // const proxyEvent = new Proxy(event, new AdaptedEvent(event));
       const proxyEvent = new Proxy(event, new (AdaptedEvent as any)(event));
@@ -194,9 +195,13 @@ eventTypes.forEach((eventType) => {
         boolean | AddEventListenerOptions | undefined
       ]
     ) {
+      nativeAddEventListener.call(this, ...args);
       if (!eventTypes.includes(args[0])) {
-        return nativeAddEventListener.call(this, ...args);
+        return;
       }
+      // if (!eventTypes.includes(args[0])) {
+      //   return nativeAddEventListener.call(this, ...args);
+      // }
       let listenerObjectsByEventTarget = listenerObjectsByType.get(args[0]);
       if (!listenerObjectsByEventTarget) {
         listenerObjectsByEventTarget = new Map();
@@ -231,9 +236,13 @@ eventTypes.forEach((eventType) => {
         boolean | AddEventListenerOptions | undefined
       ]
     ) {
+      nativeRemoveEventListener.call(this, ...args);
       if (!eventTypes.includes(args[0])) {
-        return nativeRemoveEventListener.call(this, ...args);
+        return;
       }
+      // if (!eventTypes.includes(args[0])) {
+      //   return nativeRemoveEventListener.call(this, ...args);
+      // }
       const listenerObjectsByEventTarget = listenerObjectsByType.get(args[0]);
       if (!listenerObjectsByEventTarget) return;
       const listenerObjects = listenerObjectsByEventTarget.get(this);

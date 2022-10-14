@@ -5,5 +5,9 @@ type Props = {
   children: ReactNode;
 };
 export const ShadowDOM: FC<Props> = ({ children }) => {
-  return <root.div style={{ all: "initial" }}>{children}</root.div>;
+  return (
+    <root.div id="plugin-root" style={{ all: "initial" }}>
+      {children}
+    </root.div>
+  );
 };
