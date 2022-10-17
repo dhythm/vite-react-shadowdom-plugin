@@ -124,15 +124,19 @@ type ListenerObjectByType = Map<string, ListenerObjectByEventTarget>;
 const listenerObjectsByType: ListenerObjectByType = new Map();
 
 function AdaptedEvent(event: Event, target: EventTarget) {
-  // TODO:
-  // shadowDOMの中かどうかによってtargetを正しく変える
-  // ShadowDOM の外なら shadow Host or [0]
   const paths = event.composedPath();
-  const newTarget = event.composedPath()[0];
-  if (event.type === "click") {
-    console.log(paths, target);
-    console.log(paths.findIndex((path) => path === target));
-  }
+  const targetIndex = paths.findIndex((path) => path === target);
+  /**
+   * if the current target is in shadow-dom, the new target should be shadow-host,
+   * on the other hand, if the current one is not in shadow-dom, the new one should be clicked target (paths[0])
+   */
+  const newTarget =
+    (targetIndex >= 0 &&
+      paths
+        .slice(0, targetIndex)
+        .reverse()
+        .find((path: any) => path.nodeName === "#document-fragment")) ??
+    paths[0];
   return {
     get: (target: Event, prop: keyof Event) => {
       const property = target[prop];
