@@ -123,9 +123,16 @@ type ListenerObjectByType = Map<string, ListenerObjectByEventTarget>;
 
 const listenerObjectsByType: ListenerObjectByType = new Map();
 
-function AdaptedEvent(event: Event) {
-  // TODO: shadowDOMの中かどうかによってtargetを正しく変える
+function AdaptedEvent(event: Event, target: EventTarget) {
+  // TODO:
+  // shadowDOMの中かどうかによってtargetを正しく変える
+  // ShadowDOM の外なら shadow Host or [0]
+  const paths = event.composedPath();
   const newTarget = event.composedPath()[0];
+  if (event.type === "click") {
+    console.log(paths, target);
+    console.log(paths.findIndex((path) => path === target));
+  }
   return {
     get: (target: Event, prop: keyof Event) => {
       const property = target[prop];
@@ -147,13 +154,15 @@ eventTypes.forEach((eventType) => {
       if (!listenerObjects) return;
 
       const paths = event.composedPath();
-      // const isShadowDOM = paths.some((path: any) => path?.shadowRoot);
-      const isPlugin = paths.some((path: any) => path?.id === "plugin-root");
+      const isPlugin = paths.some((path: any) => path?.id === "crx-root");
       if (!isPlugin) return;
       event.stopImmediatePropagation();
-      // const proxyEvent = new Proxy(event, new AdaptedEvent(event));
-      const proxyEvent = new Proxy(event, new (AdaptedEvent as any)(event));
+      // const proxyEvent = new Proxy(event, new (AdaptedEvent as any)(event));
       [...paths].reverse().forEach((path) => {
+        const proxyEvent = new Proxy(
+          event,
+          new (AdaptedEvent as any)(event, path)
+        );
         listenerObjects
           .get(path)
           ?.filter(
@@ -167,6 +176,10 @@ eventTypes.forEach((eventType) => {
           });
       });
       paths.forEach((path) => {
+        const proxyEvent = new Proxy(
+          event,
+          new (AdaptedEvent as any)(event, path)
+        );
         listenerObjects
           .get(path)
           ?.filter(

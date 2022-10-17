@@ -7,6 +7,7 @@ import indexCss from "./index.css";
 
 function App() {
   const [count, setCount] = useState(0);
+  const [nestedCount, setNestedCount] = useState(0);
 
   return (
     <ShadowDOM>
@@ -41,10 +42,20 @@ function App() {
           <div className="card">
             <button
               className="shadow"
-              onClick={() => setCount((count) => count + 1)}
+              onClick={() => setCount((prev) => prev + 1)}
             >
               count is {count}
             </button>
+            <ShadowDOM>
+              <div className="card">
+                <button
+                  className="shadow"
+                  onClick={() => setNestedCount((prev) => prev + 1)}
+                >
+                  nested count is {nestedCount}
+                </button>
+              </div>
+            </ShadowDOM>
           </div>
         </div>
       </div>

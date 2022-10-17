@@ -6,7 +6,7 @@ type Props = {
 };
 export const ShadowDOM: FC<Props> = ({ children }) => {
   return (
-    <root.div id="plugin-root" style={{ all: "initial" }}>
+    <root.div style={{ all: "initial" }}>
       {children}
     </root.div>
   );
