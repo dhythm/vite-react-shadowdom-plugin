@@ -57,6 +57,19 @@ function App() {
               </div>
             </ShadowDOM>
           </div>
+          <div>
+            <div className="card">
+              <button
+                style={{ color: "#ffffff" }}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  console.log("stopPropagation is clicked");
+                }}
+              >
+                stop propagation
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </ShadowDOM>

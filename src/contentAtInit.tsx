@@ -123,7 +123,11 @@ type ListenerObjectByType = Map<string, ListenerObjectByEventTarget>;
 
 const listenerObjectsByType: ListenerObjectByType = new Map();
 
-function AdaptedEvent(event: Event, target: EventTarget) {
+function AdaptedEvent(
+  event: Event,
+  target: EventTarget,
+  eventPhase: Event["eventPhase"]
+) {
   const paths = event.composedPath();
   const targetIndex = paths.findIndex((path) => path === target);
   /**
@@ -140,6 +144,12 @@ function AdaptedEvent(event: Event, target: EventTarget) {
   return {
     get: (target: Event, prop: keyof Event) => {
       const property = target[prop];
+      if (prop === "eventPhase") {
+        return eventPhase;
+      }
+      if (prop === "stopPropagation" || prop === "stopImmediatePropagation") {
+        console.log(`${prop} is called.`);
+      }
       if (typeof property === "function") {
         return property.bind(event);
       } else if (prop === "target") {
@@ -163,7 +173,10 @@ eventTypes.forEach((eventType) => {
       if (!isPlugin) return;
       event.stopImmediatePropagation();
       [...eventTargets].reverse().forEach((eventTarget) => {
-        const proxyEvent = new Proxy(event, AdaptedEvent(event, eventTarget));
+        const proxyEvent = new Proxy(
+          event,
+          AdaptedEvent(event, eventTarget, Event.CAPTURING_PHASE)
+        );
         listenerObjects
           .get(eventTarget)
           ?.filter(
@@ -177,7 +190,10 @@ eventTypes.forEach((eventType) => {
           });
       });
       eventTargets.forEach((eventTarget) => {
-        const proxyEvent = new Proxy(event, AdaptedEvent(event, eventTarget));
+        const proxyEvent = new Proxy(
+          event,
+          AdaptedEvent(event, eventTarget, Event.BUBBLING_PHASE)
+        );
 
         listenerObjects
           .get(eventTarget)
