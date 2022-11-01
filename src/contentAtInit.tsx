@@ -156,19 +156,16 @@ eventTypes.forEach((eventType) => {
     (event) => {
       const listenerObjects = listenerObjectsByType.get(eventType);
       if (!listenerObjects) return;
-
-      const paths = event.composedPath();
-      const isPlugin = paths.some((path: any) => path?.id === "crx-root");
+      const eventTargets = event.composedPath();
+      const isPlugin = eventTargets.some(
+        (eventTarget: any) => eventTarget?.id === "crx-root"
+      );
       if (!isPlugin) return;
       event.stopImmediatePropagation();
-      // const proxyEvent = new Proxy(event, new (AdaptedEvent as any)(event));
-      [...paths].reverse().forEach((path) => {
-        const proxyEvent = new Proxy(
-          event,
-          new (AdaptedEvent as any)(event, path)
-        );
+      [...eventTargets].reverse().forEach((eventTarget) => {
+        const proxyEvent = new Proxy(event, AdaptedEvent(event, eventTarget));
         listenerObjects
-          .get(path)
+          .get(eventTarget)
           ?.filter(
             (listenerObject) =>
               listenerObject.options === true ||
@@ -176,16 +173,14 @@ eventTypes.forEach((eventType) => {
                 listenerObject.options.capture)
           )
           .forEach((listener) => {
-            listener.handler.call(path, proxyEvent);
+            listener.handler.call(eventTarget, proxyEvent);
           });
       });
-      paths.forEach((path) => {
-        const proxyEvent = new Proxy(
-          event,
-          new (AdaptedEvent as any)(event, path)
-        );
+      eventTargets.forEach((eventTarget) => {
+        const proxyEvent = new Proxy(event, AdaptedEvent(event, eventTarget));
+
         listenerObjects
-          .get(path)
+          .get(eventTarget)
           ?.filter(
             (listenerObject) =>
               !listenerObject.options ||
@@ -193,7 +188,7 @@ eventTypes.forEach((eventType) => {
                 !listenerObject.options.capture)
           )
           .forEach((listener) => {
-            listener.handler.call(path, proxyEvent);
+            listener.handler.call(eventTarget, proxyEvent);
           });
       });
     },
