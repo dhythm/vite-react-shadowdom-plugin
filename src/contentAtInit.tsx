@@ -123,6 +123,8 @@ type ListenerObjectByType = Map<string, ListenerObjectByEventTarget>;
 
 const listenerObjectsByType: ListenerObjectByType = new Map();
 
+let stopPropagationFlag: boolean = false;
+
 function AdaptedEvent(
   event: Event,
   target: EventTarget,
@@ -147,10 +149,11 @@ function AdaptedEvent(
       if (prop === "eventPhase") {
         return eventPhase;
       }
-      if (prop === "stopPropagation" || prop === "stopImmediatePropagation") {
-        console.log(`${prop} is called.`);
-      }
       if (typeof property === "function") {
+        if (prop === "stopPropagation" || prop === "stopImmediatePropagation") {
+          console.log(`${prop} is called.`);
+          stopPropagationFlag = true;
+        }
         return property.bind(event);
       } else if (prop === "target") {
         return newTarget ? newTarget : event.target;
@@ -172,7 +175,9 @@ eventTypes.forEach((eventType) => {
       );
       if (!isPlugin) return;
       event.stopImmediatePropagation();
+      stopPropagationFlag = false;
       [...eventTargets].reverse().forEach((eventTarget) => {
+        if (stopPropagationFlag) return;
         const proxyEvent = new Proxy(
           event,
           AdaptedEvent(event, eventTarget, Event.CAPTURING_PHASE)
@@ -190,6 +195,7 @@ eventTypes.forEach((eventType) => {
           });
       });
       eventTargets.forEach((eventTarget) => {
+        if (stopPropagationFlag) return;
         const proxyEvent = new Proxy(
           event,
           AdaptedEvent(event, eventTarget, Event.BUBBLING_PHASE)
