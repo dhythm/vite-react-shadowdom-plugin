@@ -60,13 +60,23 @@ function App() {
           <div>
             <div className="card">
               <button
-                style={{ color: "#ffffff" }}
+                style={{ color: "#ffffff", backgroundColor: "#000000" }}
                 onClick={(event) => {
                   event.stopPropagation();
                   console.log("stopPropagation is clicked");
                 }}
               >
                 stop propagation
+              </button>
+            </div>
+            <div className="card">
+              <button
+                style={{ color: "#ffffff", backgroundColor: "#000000" }}
+                onClick={(event) => {
+                  console.log("propagated is clicked");
+                }}
+              >
+                propagated
               </button>
             </div>
           </div>
